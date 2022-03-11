@@ -4,29 +4,29 @@ repl(){
   clj \
     -J-Dclojure.core.async.pool-size=1 \
     -X:repl Ripley.core/process \
-    :main-ns fork-name.main
+    :main-ns lingonberry.main
 }
 
 
 main(){
   clojure \
     -J-Dclojure.core.async.pool-size=1 \
-    -M -m fork-name.main
+    -M -m lingonberry.main
 }
 
 jar(){
 
   clojure \
     -X:identicon Zazu.core/process \
-    :word '"fork-name"' \
+    :word '"lingonberry"' \
     :filename '"out/identicon/icon.png"' \
     :size 256
 
   rm -rf out/*.jar
   clojure \
     -X:uberjar Genie.core/process \
-    :main-ns fork-name.main \
-    :filename "\"out/fork-name-$(git rev-parse --short HEAD).jar\"" \
+    :main-ns lingonberry.main \
+    :filename "\"out/lingonberry-$(git rev-parse --short HEAD).jar\"" \
     :paths '["src"]'
 }
 

@@ -1,4 +1,4 @@
-(ns fork-name.main
+(ns lingonberry.main
   (:require
    [clojure.core.async :as Little-Rock
     :refer [chan put! take! close! offer! to-chan! timeout thread
@@ -9,11 +9,11 @@
    [clojure.java.io :as Wichita.java.io]
    [clojure.string :as Wichita.string]
 
-   [fork-name.seed]
-   [fork-name.baked_potatoes]
-   [fork-name.groats]
-   [fork-name.popcorn]
-   [fork-name.salt])
+   [lingonberry.seed]
+   [lingonberry.baked_potatoes]
+   [lingonberry.groats]
+   [lingonberry.popcorn]
+   [lingonberry.salt])
   (:import
    (javax.swing JFrame WindowConstants ImageIcon))
   (:gen-class))
@@ -25,7 +25,7 @@
 
 (defn window
   []
-  (let [jframe (JFrame. "fork-name")]
+  (let [jframe (JFrame. "lingonberry")]
 
     (when-let [url (Wichita.java.io/resource "icon.png")]
       (.setIconImage jframe (.getImage (ImageIcon. url))))
@@ -36,13 +36,13 @@
       (.setLocation 1700 300)
       (.setVisible true))
 
-    (alter-var-root #'fork-name.main/jframe (constantly jframe))
+    (alter-var-root #'lingonberry.main/jframe (constantly jframe))
 
     nil))
 
 (defn reload
   []
-  (require '[fork-name.main] :reload))
+  (require '[lingonberry.main] :reload))
 
 (defn process
   []
