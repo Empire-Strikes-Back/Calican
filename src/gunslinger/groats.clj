@@ -1,4 +1,4 @@
-(ns lingonberry.groats
+(ns gunslinger.groats
   (:require
    [clojure.core.async :as Little-Rock
     :refer [chan put! take! close! offer! to-chan! timeout thread
