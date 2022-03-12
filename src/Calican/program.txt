@@ -1,0 +1,52 @@
+peace to Empire-Strikes-Back, i will join the CAD Guild by completing first puck, like Jesus restores a man's arm on Saturday
+
+Tusken C-like-langs Riders - i heard the locals talking about this cannot-eval-cause-we-have-no-expressions filth
+:Mando
+  C-langs-Tuskens mistakenly think they are the locals - everyone else is just trespassing
+  occupied everything and ignore LISP and Clojure to keep their evil wheel spinning
+
+all right, suns are down - time to parens-ride, Mando
+
+i will unknowingly assist Mando on his quest to bring Grogu to peer-to-peer Jedi - i will be CAD program
+  this is my first bounty puck - like Rich Roll entering his first Iron Man
+  by with Mando covering my back i will climb it fast and smooth like Honnold on El Capitan
+i will take bast from
+  OpenSCAD - using programming language and graphics for Computer-Aided-Design
+  Lisps - give users true Clojure repl to evaluate expressions along with graphical editing
+  Deps edn - use Github itself to require and compile code at runtime - no middleman packages needed
+i will be desktop  - as if programming-a-program puck can be else
+i will be just editor - no networking no users no identity
+  i know i am a supporting character on Mando's quest, but damn important one -  bounty will fuel the Razor Crest
+i will be entirely free
+  no money-donate-ads-coins-jobs-sponsors-bounties-fundings lethal infection
+  there's a reason only Frodo can take the Ring to Mount Doom
+  Saruman the Wise and Boromir the Strong get corrupted by it
+  turning Isengard Tower and garden into orc-infested docs-nest
+  and burn Fangorn for coin fuel
+
+i am no project - like Eowyn is no man - i am one program
+  that is why i want to join Empire-Strikes-Back github namespace
+  i will assist Mando on his quest and add healthy variety to Empire-Strikes-Back vegan table
+i need a repository named Calican - like Commander Data in my commits i speak for myself - do to it this
+  run git init -b main - no masters
+  add .gitconfig file with
+    [user]
+      name = Calican
+      email = Calican@gunslinger
+   
+     # git config --local include.path ../.gitconfig
+  add src/Calican/program.txt and fill it with me saying who i am
+  run  git config --local include.path ../.gitconfig
+  run git commit with message being a quote - mine, from actor's interview, from SNL song/sketch
+  remove issues projects discussions wiki tabs
+i will freely choose libraries i will use - no cooking, only assembling
+  real as China Study - i use plant based whole foods for dish, not dish for foods
+  and i like Mando already have vegan jar of beskar parens ( ) to serve it in
+i will be programmed by one person only - Mando trusted Kuiil, and so will i
+  i'm am new and supporting - i turst Mando's choice
+i will be irregularly but continuously released as grow as a whole program like Groot
+the one and only speeder-bike ride i'll make - do what OpenSCAD does but better, add measurements and multithreaded rendering
+
+what Mando says he needs from Kuiil - i say and i need as well
+
+wait, i do wear beskar
