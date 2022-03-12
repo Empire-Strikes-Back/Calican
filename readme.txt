@@ -1,1 +1,1 @@
-gunslinger
+you're my ticket into the Guild

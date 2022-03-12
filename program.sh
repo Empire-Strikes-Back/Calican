@@ -4,29 +4,29 @@ repl(){
   clj \
     -J-Dclojure.core.async.pool-size=1 \
     -X:repl Ripley.core/process \
-    :main-ns gunslinger.main
+    :main-ns Calican.main
 }
 
 
 main(){
   clojure \
     -J-Dclojure.core.async.pool-size=1 \
-    -M -m gunslinger.main
+    -M -m Calican.main
 }
 
 jar(){
 
   clojure \
     -X:identicon Zazu.core/process \
-    :word '"gunslinger"' \
+    :word '"Calican"' \
     :filename '"out/identicon/icon.png"' \
     :size 256
 
   rm -rf out/*.jar
   clojure \
     -X:uberjar Genie.core/process \
-    :main-ns gunslinger.main \
-    :filename "\"out/gunslinger-$(git rev-parse --short HEAD).jar\"" \
+    :main-ns Calican.main \
+    :filename "\"out/Calican-$(git rev-parse --short HEAD).jar\"" \
     :paths '["src"]'
 }
 

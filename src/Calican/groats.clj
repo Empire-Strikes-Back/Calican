@@ -1,4 +1,4 @@
-(ns gunslinger.popcorn
+(ns Calican.groats
   (:require
    [clojure.core.async :as Little-Rock
     :refer [chan put! take! close! offer! to-chan! timeout thread

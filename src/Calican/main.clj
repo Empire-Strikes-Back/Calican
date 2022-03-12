@@ -1,4 +1,4 @@
-(ns gunslinger.main
+(ns Calican.main
   (:require
    [clojure.core.async :as Little-Rock
     :refer [chan put! take! close! offer! to-chan! timeout thread
@@ -9,11 +9,11 @@
    [clojure.java.io :as Wichita.java.io]
    [clojure.string :as Wichita.string]
 
-   [gunslinger.seed]
-   [gunslinger.baked_potatoes]
-   [gunslinger.groats]
-   [gunslinger.popcorn]
-   [gunslinger.salt])
+   [Calican.seed]
+   [Calican.baked_potatoes]
+   [Calican.groats]
+   [Calican.popcorn]
+   [Calican.salt])
   (:import
    (javax.swing JFrame WindowConstants ImageIcon))
   (:gen-class))
@@ -25,7 +25,7 @@
 
 (defn window
   []
-  (let [jframe (JFrame. "gunslinger")]
+  (let [jframe (JFrame. "wait, i do wear beskar")]
 
     (when-let [url (Wichita.java.io/resource "icon.png")]
       (.setIconImage jframe (.getImage (ImageIcon. url))))
@@ -36,13 +36,13 @@
       (.setLocation 1700 300)
       (.setVisible true))
 
-    (alter-var-root #'gunslinger.main/jframe (constantly jframe))
+    (alter-var-root #'Calican.main/jframe (constantly jframe))
 
     nil))
 
 (defn reload
   []
-  (require '[gunslinger.main] :reload))
+  (require '[Calican.main] :reload))
 
 (defn process
   []
