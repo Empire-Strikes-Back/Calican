@@ -14,7 +14,6 @@ i will take bast from
   OpenSCAD - using programming language and graphics for Computer-Aided-Design
   Lisps - give users true Clojure repl to evaluate expressions along with graphical editing
   Deps edn - use Github itself to require and compile code at runtime - no middleman packages needed
-  JNI/JNA - use java native interface/access to use OpenSCAD's libraries 
 i will be desktop  - as if programming-a-program puck can be else
 i will be just editor - no networking no users no identity
   i know i am a supporting character on Mando's quest, but damn important one -  bounty will fuel the Razor Crest
