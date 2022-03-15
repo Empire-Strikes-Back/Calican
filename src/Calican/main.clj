@@ -8,6 +8,7 @@
             pipe pipeline pipeline-async]]
    [clojure.java.io :as Wichita.java.io]
    [clojure.string :as Wichita.string]
+   [clojure.repl :as Wichita.repl]
 
    [Calican.seed]
    [Calican.baked_potatoes]
@@ -91,7 +92,7 @@
   (go
     (let [fn-names (keys (ns-publics 'Calican.main))]
       (doseq [fn-name fn-names]
-        (print (eval-form `(with-out-str (clojure.repl/doc ~fn-name)) {:print-form? false}))))))
+        (print (eval-form `(with-out-str (Wichita.repl/doc ~fn-name)) {:print-form? false}))))))
 
 (defn window
   []
