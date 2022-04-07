@@ -16,11 +16,16 @@
    [Calican.popcorn]
    [Calican.salt])
   (:import
-   (javax.swing JFrame WindowConstants ImageIcon JPanel JScrollPane JTextArea BoxLayout JEditorPane ScrollPaneConstants)
+   (javax.swing JFrame WindowConstants ImageIcon JPanel JScrollPane JTextArea BoxLayout JEditorPane ScrollPaneConstants SwingUtilities JDialog)
+   (javax.swing JMenu JMenuItem JMenuBar KeyStroke JOptionPane JToolBar JButton JToggleButton)
    (javax.swing.border EmptyBorder)
-   (java.awt Canvas Graphics Graphics2D Shape Color Polygon Dimension BasicStroke)
-   (java.awt.event KeyListener KeyEvent MouseListener MouseEvent)
-   (java.awt.geom Ellipse2D Ellipse2D$Double Point2D$Double))
+   (java.awt Canvas Graphics Graphics2D Shape Color Polygon Dimension BasicStroke Toolkit Insets BorderLayout)
+   (java.awt.event KeyListener KeyEvent MouseListener MouseEvent ActionListener ActionEvent)
+   (java.awt.geom Ellipse2D Ellipse2D$Double Point2D$Double)
+   (com.formdev.flatlaf FlatLaf FlatLightLaf)
+   (com.formdev.flatlaf.extras FlatUIDefaultsInspector FlatDesktop FlatDesktop$QuitResponse FlatSVGIcon)
+   (com.formdev.flatlaf.util SystemInfo)
+   (java.util.function Consumer))
   (:gen-class))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -96,24 +101,9 @@
 
 (defn window
   []
-  (let [jframe (JFrame. "wait, i do wear beskar")]
-
-    (when-let [url (Wichita.java.io/resource "icon.png")]
-      (.setIconImage jframe (.getImage (ImageIcon. url))))
-
-    (doto jframe
-      (.setDefaultCloseOperation WindowConstants/EXIT_ON_CLOSE)
-      (.setSize 1600 1200)
-      (.setLocation 1700 300)
-      (.setVisible true))
-
-    (alter-var-root #'Calican.main/jframe (constantly jframe))
-
-    nil))
-
-(defn window
-  []
-  (let [jframe (JFrame. "wait, i do wear beskar")
+  (let [jframe-title "wait, i do wear beskar"
+        jframe (JFrame. jframe-title)
+        content-pane (.getContentPane jframe)
         panel (JPanel.)
         layout (BoxLayout. panel BoxLayout/X_AXIS)
         code-panel (JPanel.)
@@ -123,68 +113,209 @@
         output (JTextArea. 14 80)
         output-scroll (JScrollPane.)
         editor (JEditorPane.)
-        editor-scroll (JScrollPane.)]
+        editor-scroll (JScrollPane.)
+        screenshotsMode? (Boolean/parseBoolean (System/getProperty "flatlaf.demo.screenshotsMode"))
+
+        on-menubar-item (fn [f]
+                          (reify ActionListener
+                            (actionPerformed [_ event]
+                              (SwingUtilities/invokeLater
+                               (reify Runnable
+                                 (run [_]
+                                   (f _ event)))))))
+
+        on-menu-item-show-dialog (on-menubar-item (fn [_ event] (JOptionPane/showMessageDialog jframe (.getActionCommand ^ActionEvent event) "menu bar item" JOptionPane/PLAIN_MESSAGE)))]
+
+    (let [jmenubar (JMenuBar.)]
+      (doto jmenubar
+        (.add (doto (JMenu.)
+                (.setText "file")
+                (.setMnemonic \F)
+                (.add (doto (JMenuItem.)
+                        (.setText "new")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_N (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \U)
+                        (.addActionListener on-menu-item-show-dialog)))
+                (.add (doto (JMenuItem.)
+                        (.setText "exit")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Q (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \X)
+                        (.addActionListener (on-menubar-item (fn [_ event]
+                                                               (.dispose jframe))))))))
+
+        (.add (doto (JMenu.)
+                (.setText "edit")
+                (.setMnemonic \E)
+                (.add (doto (JMenuItem.)
+                        (.setText "undo")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Z (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \U)
+                        (.addActionListener on-menu-item-show-dialog)))
+                (.add (doto (JMenuItem.)
+                        (.setText "redo")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Y (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \R)
+                        (.addActionListener on-menu-item-show-dialog)))
+                (.addSeparator)
+                (.add (doto (JMenuItem.)
+                        (.setText "cut")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_X (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \C)
+                        (.addActionListener on-menu-item-show-dialog)))
+                (.add (doto (JMenuItem.)
+                        (.setText "copy")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_C (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \O)
+                        (.addActionListener on-menu-item-show-dialog)))
+                (.add (doto (JMenuItem.)
+                        (.setText "paste")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_V (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                        (.setMnemonic \P)
+                        (.addActionListener on-menu-item-show-dialog)))
+                (.addSeparator)
+                (.add (doto (JMenuItem.)
+                        (.setText "delete")
+                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_DELETE 0))
+                        (.setMnemonic \D)
+                        (.addActionListener on-menu-item-show-dialog))))))
+
+      (.setJMenuBar jframe jmenubar))
+
+
+
+    (let [jtoolbar (JToolBar.)]
+      (doto jtoolbar
+        (.setMargin (Insets. 3 3 3 3))
+        (.add (doto (JButton.)
+                (.setToolTipText "back")
+                (.setText "back")))
+        (.add (doto (JButton.)
+                (.setToolTipText "forward")
+                (.setText "forward")))
+        (.addSeparator)
+        (.add (doto (JButton.)
+                (.setToolTipText "cut")
+                (.setText "cut")))
+        (.add (doto (JButton.)
+                (.setToolTipText "copy")
+                (.setText "copy")))
+        (.add (doto (JButton.)
+                (.setToolTipText "paste")
+                (.setText "paste")))
+        (.addSeparator)
+        (.add (doto (JToggleButton.)
+                (.setToolTipText "show details")
+                (.setSelected true))))
+
+      (.add content-pane jtoolbar BorderLayout/NORTH))
+
+    (let [editor-panel (JPanel.)]
+      (.add content-pane editor-panel BorderLayout/WEST))
+
+    (let [canvas-panel (JPanel.)]
+      (.add content-pane canvas-panel BorderLayout/EAST))
 
     (when-let [url (Wichita.java.io/resource "icon.png")]
       (.setIconImage jframe (.getImage (ImageIcon. url))))
 
-    (doto editor
-      (.setBorder (EmptyBorder. #_top 0 #_left 0 #_bottom 0 #_right 20)))
+    (when SystemInfo/isMacOS
+      (System/setProperty "apple.laf.useScreenMenuBar" "true")
+      (System/setProperty "apple.awt.application.name" jframe-title)
+      (System/setProperty "apple.awt.application.appearance" "system"))
 
-    (doto editor-scroll
-      (.setViewportView editor)
-      (.setHorizontalScrollBarPolicy ScrollPaneConstants/HORIZONTAL_SCROLLBAR_NEVER)
-      (.setPreferredSize (Dimension. 800 1300)))
+    (when SystemInfo/isLinux
+      (JFrame/setDefaultLookAndFeelDecorated true)
+      (JDialog/setDefaultLookAndFeelDecorated true))
 
-    (doto output
-      (.setEditable false))
+    (when (and
+           (not SystemInfo/isJava_9_orLater)
+           (= (System/getProperty "flatlaf.uiScale") nil))
+      (System/setProperty "flatlaf.uiScale" "2x"))
+    (SwingUtilities/invokeLater (reify Runnable
+                                  (run [_]
+                                    (FlatLightLaf/setup)
 
-    (doto output-scroll
-      (.setViewportView output)
-      (.setHorizontalScrollBarPolicy ScrollPaneConstants/HORIZONTAL_SCROLLBAR_NEVER))
+                                    (.setPreferredSize jframe
+                                                       (if SystemInfo/isJava_9_orLater
+                                                         (Dimension. 830 440)
+                                                         (Dimension. 1660 880)))
 
-    (doto repl
-      (.addKeyListener (reify KeyListener
-                         (keyPressed
-                           [_ event]
-                           (when (= (.getKeyCode ^KeyEvent event) KeyEvent/VK_ENTER)
-                             (.consume ^KeyEvent event)))
-                         (keyReleased
-                           [_ event]
-                           (when (= (.getKeyCode ^KeyEvent event) KeyEvent/VK_ENTER)
-                             (-> (.getText repl) (clojure.string/trim) (clojure.string/trim-newline) (read-string) (eval-form))
-                             (.setText repl "")))
-                         (keyTyped
-                           [_ event]))))
+                                    (FlatDesktop/setQuitHandler (reify Consumer
+                                                                  (accept [_ response]
+                                                                    (.performQuit ^FlatDesktop$QuitResponse response))
+                                                                  (andThen [_ after] after)))
 
-    (doto code-panel
-      (.setLayout code-layout)
-      (.add editor-scroll)
-      (.add output-scroll)
-      (.add repl))
+                                    #_(doto jframe
+                                        (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+                                        (.setSize 2400 1600)
+                                        (.setLocation 1300 200)
+                                        #_(.add panel)
+                                        (.setVisible true))
+                                    (doto jframe
+                                      (.pack)
 
-    (doto canvas
-      (.setSize canvas-width canvas-height)
-      (.addMouseListener (reify MouseListener
-                           (mouseClicked
-                             [_ event]
-                             (println :coordinate [(.getX ^MouseEvent event) (.getY ^MouseEvent event)]))
-                           (mouseEntered [_ event])
-                           (mouseExited [_ event])
-                           (mousePressed [_ event])
-                           (mouseReleased [_ event]))))
+                                      (.setLocationRelativeTo nil)
+                                      (.setVisible true)))))
 
-    (doto panel
-      (.setLayout layout)
-      (.add code-panel)
-      (.add canvas))
+    #_(do
+        (doto editor
+          (.setBorder (EmptyBorder. #_top 0 #_left 0 #_bottom 0 #_right 20)))
 
-    (doto jframe
-      (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-      (.setSize 2400 1600)
-      (.setLocation 1300 200)
-      (.add panel)
-      (.setVisible true))
+        (doto editor-scroll
+          (.setViewportView editor)
+          (.setHorizontalScrollBarPolicy ScrollPaneConstants/HORIZONTAL_SCROLLBAR_NEVER)
+          (.setPreferredSize (Dimension. 800 1300)))
+
+        (doto output
+          (.setEditable false))
+
+        (doto output-scroll
+          (.setViewportView output)
+          (.setHorizontalScrollBarPolicy ScrollPaneConstants/HORIZONTAL_SCROLLBAR_NEVER))
+
+        (doto repl
+          (.addKeyListener (reify KeyListener
+                             (keyPressed
+                               [_ event]
+                               (when (= (.getKeyCode ^KeyEvent event) KeyEvent/VK_ENTER)
+                                 (.consume ^KeyEvent event)))
+                             (keyReleased
+                               [_ event]
+                               (when (= (.getKeyCode ^KeyEvent event) KeyEvent/VK_ENTER)
+                                 (-> (.getText repl) (clojure.string/trim) (clojure.string/trim-newline) (read-string) (eval-form))
+                                 (.setText repl "")))
+                             (keyTyped
+                               [_ event]))))
+
+        (doto code-panel
+          (.setLayout code-layout)
+          (.add editor-scroll)
+          (.add output-scroll)
+          (.add repl))
+
+        (doto canvas
+          (.setSize canvas-width canvas-height)
+          (.addMouseListener (reify MouseListener
+                               (mouseClicked
+                                 [_ event]
+                                 (println :coordinate [(.getX ^MouseEvent event) (.getY ^MouseEvent event)]))
+                               (mouseEntered [_ event])
+                               (mouseExited [_ event])
+                               (mousePressed [_ event])
+                               (mouseReleased [_ event]))))
+
+        (doto panel
+          (.setLayout layout)
+          (.add code-panel)
+          (.add canvas))
+
+        (doto jframe
+          (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+          (.setSize 2400 1600)
+          (.setLocation 1300 200)
+          (.add panel)
+          (.setVisible true)))
+
 
     (alter-var-root #'Calican.main/jframe (constantly jframe))
     (alter-var-root #'Calican.main/canvas (constantly canvas))
@@ -194,16 +325,16 @@
     (alter-var-root #'Calican.main/editor (constantly editor))
     (alter-var-root #'Calican.main/graphics (constantly (.getGraphics canvas)))
 
-    (add-watch stateA :watch-fn
-               (fn [ref wathc-key old-state new-state]
+    #_(add-watch stateA :watch-fn
+                 (fn [ref wathc-key old-state new-state]
 
-                 (clear-canvas)
-                 (.setPaint graphics (Color. 237 211 175 200))
-                 (.fillRect graphics 0 0 (.getWidth canvas) (.getHeight canvas))))
+                   (clear-canvas)
+                   (.setPaint graphics (Color. 237 211 175 200))
+                   (.fillRect graphics 0 0 (.getWidth canvas) (.getHeight canvas))))
 
-    (go
-      (<! (timeout 100))
-      (eval-form `(print-fns)))
+    #_(go
+        (<! (timeout 100))
+        (eval-form `(print-fns)))
     nil))
 
 (defn reload
