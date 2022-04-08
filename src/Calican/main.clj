@@ -25,7 +25,12 @@
    (com.formdev.flatlaf FlatLaf FlatLightLaf)
    (com.formdev.flatlaf.extras FlatUIDefaultsInspector FlatDesktop FlatDesktop$QuitResponse FlatSVGIcon)
    (com.formdev.flatlaf.util SystemInfo)
-   (java.util.function Consumer))
+   (java.util.function Consumer)
+   (java.util ServiceLoader)
+   (org.kordamp.ikonli Ikon)
+   (org.kordamp.ikonli IkonProvider)
+   (org.kordamp.ikonli.swing FontIcon)
+   (org.kordamp.ikonli.feather FeatherIkonProvider))
   (:gen-class))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -126,97 +131,7 @@
 
         on-menu-item-show-dialog (on-menubar-item (fn [_ event] (JOptionPane/showMessageDialog jframe (.getActionCommand ^ActionEvent event) "menu bar item" JOptionPane/PLAIN_MESSAGE)))]
 
-    (let [jmenubar (JMenuBar.)]
-      (doto jmenubar
-        (.add (doto (JMenu.)
-                (.setText "file")
-                (.setMnemonic \F)
-                (.add (doto (JMenuItem.)
-                        (.setText "new")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_N (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \U)
-                        (.addActionListener on-menu-item-show-dialog)))
-                (.add (doto (JMenuItem.)
-                        (.setText "exit")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Q (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \X)
-                        (.addActionListener (on-menubar-item (fn [_ event]
-                                                               (.dispose jframe))))))))
-
-        (.add (doto (JMenu.)
-                (.setText "edit")
-                (.setMnemonic \E)
-                (.add (doto (JMenuItem.)
-                        (.setText "undo")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Z (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \U)
-                        (.addActionListener on-menu-item-show-dialog)))
-                (.add (doto (JMenuItem.)
-                        (.setText "redo")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Y (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \R)
-                        (.addActionListener on-menu-item-show-dialog)))
-                (.addSeparator)
-                (.add (doto (JMenuItem.)
-                        (.setText "cut")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_X (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \C)
-                        (.addActionListener on-menu-item-show-dialog)))
-                (.add (doto (JMenuItem.)
-                        (.setText "copy")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_C (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \O)
-                        (.addActionListener on-menu-item-show-dialog)))
-                (.add (doto (JMenuItem.)
-                        (.setText "paste")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_V (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
-                        (.setMnemonic \P)
-                        (.addActionListener on-menu-item-show-dialog)))
-                (.addSeparator)
-                (.add (doto (JMenuItem.)
-                        (.setText "delete")
-                        (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_DELETE 0))
-                        (.setMnemonic \D)
-                        (.addActionListener on-menu-item-show-dialog))))))
-
-      (.setJMenuBar jframe jmenubar))
-
-
-
-    (let [jtoolbar (JToolBar.)]
-      (doto jtoolbar
-        (.setMargin (Insets. 3 3 3 3))
-        (.add (doto (JButton.)
-                (.setToolTipText "back")
-                (.setText "back")))
-        (.add (doto (JButton.)
-                (.setToolTipText "forward")
-                (.setText "forward")))
-        (.addSeparator)
-        (.add (doto (JButton.)
-                (.setToolTipText "cut")
-                (.setText "cut")))
-        (.add (doto (JButton.)
-                (.setToolTipText "copy")
-                (.setText "copy")))
-        (.add (doto (JButton.)
-                (.setToolTipText "paste")
-                (.setText "paste")))
-        (.addSeparator)
-        (.add (doto (JToggleButton.)
-                (.setToolTipText "show details")
-                (.setSelected true))))
-
-      (.add content-pane jtoolbar BorderLayout/NORTH))
-
-    (let [editor-panel (JPanel.)]
-      (.add content-pane editor-panel BorderLayout/WEST))
-
-    (let [canvas-panel (JPanel.)]
-      (.add content-pane canvas-panel BorderLayout/EAST))
-
-    (when-let [url (Wichita.java.io/resource "icon.png")]
-      (.setIconImage jframe (.getImage (ImageIcon. url))))
+    (ServiceLoader/load org.kordamp.ikonli.feather.FeatherIkonProvider)
 
     (when SystemInfo/isMacOS
       (System/setProperty "apple.laf.useScreenMenuBar" "true")
@@ -231,31 +146,132 @@
            (not SystemInfo/isJava_9_orLater)
            (= (System/getProperty "flatlaf.uiScale") nil))
       (System/setProperty "flatlaf.uiScale" "2x"))
-    (SwingUtilities/invokeLater (reify Runnable
-                                  (run [_]
-                                    (FlatLightLaf/setup)
 
-                                    (.setPreferredSize jframe
-                                                       (if SystemInfo/isJava_9_orLater
-                                                         (Dimension. 830 440)
-                                                         (Dimension. 1660 880)))
 
-                                    (FlatDesktop/setQuitHandler (reify Consumer
-                                                                  (accept [_ response]
-                                                                    (.performQuit ^FlatDesktop$QuitResponse response))
-                                                                  (andThen [_ after] after)))
+    (SwingUtilities/invokeLater
+     (reify Runnable
+       (run [_]
 
-                                    #_(doto jframe
-                                        (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-                                        (.setSize 2400 1600)
-                                        (.setLocation 1300 200)
-                                        #_(.add panel)
-                                        (.setVisible true))
-                                    (doto jframe
-                                      (.pack)
+         (FlatLightLaf/setup)
 
-                                      (.setLocationRelativeTo nil)
-                                      (.setVisible true)))))
+         (.setPreferredSize jframe
+                            (if SystemInfo/isJava_9_orLater
+                              (Dimension. 830 440)
+                              (Dimension. 1660 880)))
+
+         (FlatDesktop/setQuitHandler (reify Consumer
+                                       (accept [_ response]
+                                         (.performQuit ^FlatDesktop$QuitResponse response))
+                                       (andThen [_ after] after)))
+
+         (let [jmenubar (JMenuBar.)]
+           (doto jmenubar
+             (.add (doto (JMenu.)
+                     (.setText "file")
+                     (.setMnemonic \F)
+                     (.add (doto (JMenuItem.)
+                             (.setText "new")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_N (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \U)
+                             (.addActionListener on-menu-item-show-dialog)))
+                     (.add (doto (JMenuItem.)
+                             (.setText "exit")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Q (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \X)
+                             (.addActionListener (on-menubar-item (fn [_ event]
+                                                                    (.dispose jframe))))))))
+
+             (.add (doto (JMenu.)
+                     (.setText "edit")
+                     (.setMnemonic \E)
+                     (.add (doto (JMenuItem.)
+                             (.setText "undo")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Z (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \U)
+                             (.addActionListener on-menu-item-show-dialog)))
+                     (.add (doto (JMenuItem.)
+                             (.setText "redo")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_Y (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \R)
+                             (.addActionListener on-menu-item-show-dialog)))
+                     (.addSeparator)
+                     (.add (doto (JMenuItem.)
+                             (.setText "cut")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_X (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \C)
+                             (.addActionListener on-menu-item-show-dialog)))
+                     (.add (doto (JMenuItem.)
+                             (.setText "copy")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_C (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \O)
+                             (.addActionListener on-menu-item-show-dialog)))
+                     (.add (doto (JMenuItem.)
+                             (.setText "paste")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_V (-> (Toolkit/getDefaultToolkit) (.getMenuShortcutKeyMask))))
+                             (.setMnemonic \P)
+                             (.addActionListener on-menu-item-show-dialog)))
+                     (.addSeparator)
+                     (.add (doto (JMenuItem.)
+                             (.setText "delete")
+                             (.setAccelerator (KeyStroke/getKeyStroke KeyEvent/VK_DELETE 0))
+                             (.setMnemonic \D)
+                             (.addActionListener on-menu-item-show-dialog))))))
+
+           (.setJMenuBar jframe jmenubar))
+
+         (let [jtoolbar (JToolBar.)]
+           (doto jtoolbar
+             (.setMargin (Insets. 3 3 3 3))
+             (.add (doto (JButton.)
+                     (.setToolTipText "back")
+                     #_(.setIcon (FontIcon/of (reify Ikon
+                                                (getDescription [_]
+                                                  "fth-arrow-left")
+                                                (getCode [_] 17)) 32 Color/BLACK))
+                     (.setText "back")))
+             (.add (doto (JButton.)
+                     (.setToolTipText "forward")
+                     (.setText "forward")))
+             (.addSeparator)
+             (.add (doto (JButton.)
+                     (.setToolTipText "cut")
+                     (.setText "cut")))
+             (.add (doto (JButton.)
+                     (.setToolTipText "copy")
+                     (.setText "copy")))
+             (.add (doto (JButton.)
+                     (.setToolTipText "paste")
+                     (.setText "paste")))
+             (.addSeparator)
+             (.add (doto (JToggleButton.)
+                     (.setToolTipText "show details")
+                     (.setSelected true))))
+
+           (.add content-pane jtoolbar BorderLayout/NORTH))
+
+
+         (let [editor-panel (JPanel.)]
+           (.add content-pane editor-panel BorderLayout/WEST))
+
+         (let [canvas-panel (JPanel.)]
+           (.add content-pane canvas-panel BorderLayout/EAST))
+
+         (when-let [url (Wichita.java.io/resource "icon.png")]
+           (.setIconImage jframe (.getImage (ImageIcon. url))))
+
+
+
+         #_(doto jframe
+             (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+             (.setSize 2400 1600)
+             (.setLocation 1300 200)
+             #_(.add panel)
+             (.setVisible true))
+         (doto jframe
+           (.pack)
+
+           (.setLocationRelativeTo nil)
+           (.setVisible true)))))
 
     #_(do
         (doto editor
