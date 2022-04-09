@@ -17,10 +17,10 @@
    [Calican.salt])
   (:import
    (javax.swing JFrame WindowConstants ImageIcon JPanel JScrollPane JTextArea BoxLayout JEditorPane ScrollPaneConstants SwingUtilities JDialog)
-   (javax.swing JMenu JMenuItem JMenuBar KeyStroke JOptionPane JToolBar JButton JToggleButton)
+   (javax.swing JMenu JMenuItem JMenuBar KeyStroke JOptionPane JToolBar JButton JToggleButton JSplitPane)
    (javax.swing.border EmptyBorder)
    (java.awt Canvas Graphics Graphics2D Shape Color Polygon Dimension BasicStroke Toolkit Insets BorderLayout)
-   (java.awt.event KeyListener KeyEvent MouseListener MouseEvent ActionListener ActionEvent)
+   (java.awt.event KeyListener KeyEvent MouseListener MouseEvent ActionListener ActionEvent ComponentListener ComponentEvent)
    (java.awt.geom Ellipse2D Ellipse2D$Double Point2D$Double)
    (com.formdev.flatlaf FlatLaf FlatLightLaf)
    (com.formdev.flatlaf.extras FlatUIDefaultsInspector FlatDesktop FlatDesktop$QuitResponse FlatSVGIcon)
@@ -30,7 +30,9 @@
    (org.kordamp.ikonli Ikon)
    (org.kordamp.ikonli IkonProvider)
    (org.kordamp.ikonli.swing FontIcon)
-   (org.kordamp.ikonli.codicons Codicons))
+   (org.kordamp.ikonli.codicons Codicons)
+   (net.miginfocom.swing MigLayout)
+   (net.miginfocom.layout ConstraintParser LC UnitValue))
   (:gen-class))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -78,16 +80,19 @@
 (defn draw-word
   "draw word"
   []
-  (.drawString graphics "word" 500 500))
+  (.drawString graphics "word" (* 0.5 (.getWidth canvas)) (* 0.5 (.getWidth canvas))))
 
 (defn draw-line
   "draw line"
   []
-  (.drawLine graphics  500 500 1000 1000))
+  (.drawLine graphics  (* 0.3 (.getWidth canvas)) (* 0.3 (.getHeight canvas)) (* 0.7 (.getWidth canvas)) (* 0.7 (.getHeight canvas))))
 
 (defn clear-canvas
   []
-  (.clearRect graphics 0 0 (.getWidth canvas)  (.getHeight canvas)))
+  (.clearRect graphics 0 0 (.getWidth canvas)  (.getHeight canvas))
+  (.setPaint graphics (Color. 255 255 255 255) #_(Color. 237 211 175 200))
+  (.fillRect graphics 0 0 (.getWidth canvas) (.getHeight canvas))
+  (.setPaint graphics  Color/BLACK))
 
 (defn clear
   []
@@ -108,17 +113,7 @@
 (defn create-jframe
   []
   (let [jframe (JFrame. jframe-title)
-        content-pane (.getContentPane jframe)
-        panel (JPanel.)
-        layout (BoxLayout. panel BoxLayout/X_AXIS)
-        code-panel (JPanel.)
-        code-layout (BoxLayout. code-panel BoxLayout/Y_AXIS)
-        canvas (Canvas.)
-        repl (JTextArea. 1 80)
-        output (JTextArea. 14 80)
-        output-scroll (JScrollPane.)
-        editor (JEditorPane.)
-        editor-scroll (JScrollPane.)
+        root-panel (JPanel.)
         screenshotsMode? (Boolean/parseBoolean (System/getProperty "flatlaf.demo.screenshotsMode"))
 
         on-menubar-item (fn [f]
@@ -130,6 +125,24 @@
                                    (f _ event)))))))
 
         on-menu-item-show-dialog (on-menubar-item (fn [_ event] (JOptionPane/showMessageDialog jframe (.getActionCommand ^ActionEvent event) "menu bar item" JOptionPane/PLAIN_MESSAGE)))]
+
+    (alter-var-root #'Calican.main/jframe (constantly jframe))
+
+    (doto root-panel
+      #_(.setLayout (BoxLayout. root-panel BoxLayout/Y_AXIS))
+      (.setLayout (MigLayout. "insets 10"
+                              "[grow,shrink,fill]"
+                              "[grow,shrink,fill]")))
+
+    (doto jframe
+      (.add root-panel)
+      (.addComponentListener (let []
+                               (reify ComponentListener
+                                 (componentHidden [_ event])
+                                 (componentMoved [_ event])
+                                 (componentResized [_ event] (swap! stateA assoc :component-resized (.getTime (java.util.Date.))))
+                                 (componentShown [_ event])))))
+
 
     (let [jmenubar (JMenuBar.)]
       (doto jmenubar
@@ -193,7 +206,7 @@
 
     (let [jtoolbar (JToolBar.)]
       (doto jtoolbar
-        (.setMargin (Insets. 3 3 3 3))
+        #_(.setMargin (Insets. 3 3 3 3))
         (.add (doto (JButton.)
                 (.setToolTipText "new file")
                 (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/NEW_FILE 32 Color/BLACK))))
@@ -209,30 +222,32 @@
         (.add (doto (JButton.)
                 (.setToolTipText "redo")
                 (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/REDO 32 Color/BLACK))))
-        (.addSeparator))
+        #_(.addSeparator))
 
-      (.add content-pane jtoolbar BorderLayout/NORTH))
+      (.add root-panel jtoolbar "dock north"))
 
+    (let [content-panel (JPanel.)
+          split-pane (JSplitPane.)]
+      (doto content-panel
+        (.setLayout (BoxLayout. content-panel BoxLayout/X_AXIS))
+        #_(.add (doto split-pane
+                  (.setResizeWeight 0.5))))
 
-    (let [editor-panel (JPanel.)]
-      (.add content-pane editor-panel BorderLayout/WEST))
+      (let [code-panel (JPanel.)
+            code-layout (BoxLayout. code-panel BoxLayout/Y_AXIS)
+            repl (JTextArea. 1 80)
+            output (JTextArea. 14 80)
+            output-scroll (JScrollPane.)
+            editor (JEditorPane.)
+            editor-scroll (JScrollPane.)]
 
-    (let [canvas-panel (JPanel.)]
-      (.add content-pane canvas-panel BorderLayout/EAST))
-
-    (when-let [url (Wichita.java.io/resource "icon.png")]
-      (.setIconImage jframe (.getImage (ImageIcon. url))))
-
-   
-
-    #_(do
         (doto editor
-          (.setBorder (EmptyBorder. #_top 0 #_left 0 #_bottom 0 #_right 20)))
+          (.setBorder (EmptyBorder. #_top 0 #_left 0 #_bottom 0 #_right 0)))
 
         (doto editor-scroll
           (.setViewportView editor)
           (.setHorizontalScrollBarPolicy ScrollPaneConstants/HORIZONTAL_SCROLLBAR_NEVER)
-          (.setPreferredSize (Dimension. 800 1300)))
+          #_(.setPreferredSize (Dimension. 800 1300)))
 
         (doto output
           (.setEditable false))
@@ -256,13 +271,32 @@
                                [_ event]))))
 
         (doto code-panel
-          (.setLayout code-layout)
-          (.add editor-scroll)
-          (.add output-scroll)
-          (.add repl))
+          (.setLayout (MigLayout. "insets 0"
+                                  "[grow,shrink,fill]"
+                                  "[grow,shrink,fill]"))
+          (.add editor-scroll "wrap,height 70%")
+          (.add output-scroll "wrap,height 30%")
+          (.add repl "wrap"))
+
+        (.add root-panel code-panel "dock west")
+        #_(.setLeftComponent split-pane code-panel)
+
+        (alter-var-root #'Calican.main/output-scroll (constantly output-scroll))
+        (alter-var-root #'Calican.main/repl (constantly repl))
+        (alter-var-root #'Calican.main/output (constantly output))
+        (alter-var-root #'Calican.main/editor (constantly editor)))
+
+      (let [canvas (Canvas.)
+            canvas-panel (JPanel.)]
+
+        (doto canvas-panel
+          (.setLayout (MigLayout. "insets 0"
+                                  "[grow,shrink,fill]"
+                                  "[grow,shrink,fill]") #_(BoxLayout. canvas-panel BoxLayout/X_AXIS))
+          #_(.setBorder (EmptyBorder. #_top 0 #_left 0 #_bottom 50 #_right 50)))
 
         (doto canvas
-          (.setSize canvas-width canvas-height)
+          #_(.setPreferredSize (Dimension. canvas-width canvas-height))
           (.addMouseListener (reify MouseListener
                                (mouseClicked
                                  [_ event]
@@ -272,37 +306,26 @@
                                (mousePressed [_ event])
                                (mouseReleased [_ event]))))
 
-        (doto panel
-          (.setLayout layout)
-          (.add code-panel)
-          (.add canvas))
+        #_(.setRightComponent split-pane canvas)
 
-        (doto jframe
-          (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-          (.setSize 2400 1600)
-          (.setLocation 1300 200)
-          (.add panel)
-          (.setVisible true)))
+        (.add canvas-panel canvas "width 100%,height 100%")
+
+        (.add root-panel canvas-panel "dock east,width 50%!, height 1:100%:")
+        (go
+          (<! (timeout 50))
+          (alter-var-root #'Calican.main/canvas (constantly canvas))
+          (alter-var-root #'Calican.main/graphics (constantly (.getGraphics canvas)))))
+
+      (.add root-panel content-panel))
 
 
-    (alter-var-root #'Calican.main/jframe (constantly jframe))
-    (alter-var-root #'Calican.main/canvas (constantly canvas))
-    (alter-var-root #'Calican.main/output-scroll (constantly output-scroll))
-    (alter-var-root #'Calican.main/repl (constantly repl))
-    (alter-var-root #'Calican.main/output (constantly output))
-    (alter-var-root #'Calican.main/editor (constantly editor))
-    (alter-var-root #'Calican.main/graphics (constantly (.getGraphics canvas)))
 
-    #_(add-watch stateA :watch-fn
-                 (fn [ref wathc-key old-state new-state]
+    (when-let [url (Wichita.java.io/resource "icon.png")]
+      (.setIconImage jframe (.getImage (ImageIcon. url))))
 
-                   (clear-canvas)
-                   (.setPaint graphics (Color. 237 211 175 200))
-                   (.fillRect graphics 0 0 (.getWidth canvas) (.getHeight canvas))))
+    
 
-    #_(go
-        (<! (timeout 100))
-        (eval-form `(print-fns)))
+
     nil))
 
 (defn window
@@ -327,26 +350,47 @@
      (reify Runnable
        (run [_]
 
-         (FlatLightLaf/setup)
+            (FlatLightLaf/setup)
 
-         (create-jframe)
+            (create-jframe)
 
-         (.setPreferredSize jframe
-                            (if SystemInfo/isJava_9_orLater
-                              (Dimension. 830 440)
-                              (Dimension. 1660 880)))
+            (.setPreferredSize jframe
+                               (if SystemInfo/isJava_9_orLater
+                                 (Dimension. 830 440)
+                                 (Dimension. 1660 880)))
 
-         #_(doto jframe
-             (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-             (.setSize 2400 1600)
-             (.setLocation 1300 200)
-             #_(.add panel)
-             (.setVisible true))
-         (doto jframe
-           (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
-           (.pack)
-           (.setLocationRelativeTo nil)
-           (.setVisible true)))))))
+            #_(doto jframe
+                (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+                (.setSize 2400 1600)
+                (.setLocation 1300 200)
+                #_(.add panel)
+                (.setVisible true))
+            (doto jframe
+              (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
+              (.pack)
+              (.setLocationRelativeTo nil)
+              (.setVisible true))
+
+            (add-watch stateA :watch-fn
+                       (fn [ref wathc-key old-state new-state]
+
+                         (when (and canvas
+                                    graphics
+                                    (not= (:component-resized old-state) (:component-resized new-state)))
+                           #_(println :redraw)
+                           (clear-canvas)
+                           (draw-line)
+                           (draw-word))))
+
+            (go
+              (<! (timeout 100))
+              (eval-form `(print-fns))
+
+              (let [width (.getWidth jframe)
+                    height (.getHeight jframe)]
+                (.setSize jframe (Dimension. (+ 1 width) height))
+                (.setSize jframe (Dimension. width height))
+                (clear-canvas))))))))
 
 (defn reload
   []
