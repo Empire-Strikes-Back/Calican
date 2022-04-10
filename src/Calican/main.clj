@@ -24,7 +24,7 @@
    (java.awt.geom Ellipse2D Ellipse2D$Double Point2D$Double)
    (com.formdev.flatlaf FlatLaf FlatLightLaf)
    (com.formdev.flatlaf.extras FlatUIDefaultsInspector FlatDesktop FlatDesktop$QuitResponse FlatSVGIcon)
-   (com.formdev.flatlaf.util SystemInfo)
+   (com.formdev.flatlaf.util SystemInfo UIScale)
    (java.util.function Consumer)
    (java.util ServiceLoader)
    (org.kordamp.ikonli Ikon)
@@ -38,6 +38,9 @@
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
 
 (defonce stateA (atom nil))
+(defonce resize| (chan (sliding-buffer 1)))
+(defonce exit||A (atom #{}))
+(defonce canvas-draw| (chan (sliding-buffer 1)))
 (def ^:dynamic ^JFrame jframe nil)
 (def ^:dynamic ^Canvas canvas nil)
 (def ^:dynamic ^JTextArea repl nil)
@@ -80,7 +83,7 @@
 (defn draw-word
   "draw word"
   []
-  (.drawString graphics "word" (* 0.5 (.getWidth canvas)) (* 0.5 (.getWidth canvas))))
+  (.drawString graphics "word" (* 0.5 (.getWidth canvas)) (* 0.5 (.getHeight canvas))))
 
 (defn draw-line
   "draw line"
@@ -93,6 +96,13 @@
   (.setPaint graphics (Color. 255 255 255 255) #_(Color. 237 211 175 200))
   (.fillRect graphics 0 0 (.getWidth canvas) (.getHeight canvas))
   (.setPaint graphics  Color/BLACK))
+
+(defn force-resize
+  []
+  (let [width (.getWidth jframe)
+        height (.getHeight jframe)]
+    (.setSize jframe (Dimension. (+ 1 width) height))
+    (.setSize jframe (Dimension. width height))))
 
 (defn clear
   []
@@ -140,7 +150,7 @@
                                (reify ComponentListener
                                  (componentHidden [_ event])
                                  (componentMoved [_ event])
-                                 (componentResized [_ event] (swap! stateA assoc :component-resized (.getTime (java.util.Date.))))
+                                 (componentResized [_ event] (put! resize| (.getTime (java.util.Date.))))
                                  (componentShown [_ event])))))
 
 
@@ -209,19 +219,19 @@
         #_(.setMargin (Insets. 3 3 3 3))
         (.add (doto (JButton.)
                 (.setToolTipText "new file")
-                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/NEW_FILE 32 Color/BLACK))))
+                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/NEW_FILE (UIScale/scale 16) Color/BLACK))))
         (.add (doto (JButton.)
                 (.setToolTipText "open file")
-                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/FOLDER_OPENED 32 Color/BLACK))))
+                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/FOLDER_OPENED (UIScale/scale 16) Color/BLACK))))
         (.add (doto (JButton.)
                 (.setToolTipText "save")
-                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/SAVE 32 Color/BLACK))))
+                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/SAVE (UIScale/scale 16) Color/BLACK))))
         (.add (doto (JButton.)
                 (.setToolTipText "undo")
-                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/DISCARD 32 Color/BLACK))))
+                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/DISCARD (UIScale/scale 16) Color/BLACK))))
         (.add (doto (JButton.)
                 (.setToolTipText "redo")
-                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/REDO 32 Color/BLACK))))
+                (.setIcon (FontIcon/of org.kordamp.ikonli.codicons.Codicons/REDO (UIScale/scale 16) Color/BLACK))))
         #_(.addSeparator))
 
       (.add root-panel jtoolbar "dock north"))
@@ -308,7 +318,7 @@
 
         #_(.setRightComponent split-pane canvas)
 
-        (.add canvas-panel canvas "width 100%,height 100%")
+        (.add canvas-panel canvas "width 100%!,height 100%!")
 
         (.add root-panel canvas-panel "dock east,width 50%!, height 1:100%:")
         (go
@@ -328,6 +338,12 @@
 
     nil))
 
+(defn draw-canvas
+  []
+  
+  
+  )
+
 (defn window
   []
   (let []
@@ -346,6 +362,49 @@
            (= (System/getProperty "flatlaf.uiScale") nil))
       (System/setProperty "flatlaf.uiScale" "2x"))
 
+    (doseq [exit| @exit||A]
+      (close! exit|))
+
+    (let [exit| (chan 1)]
+      (swap! exit||A conj exit|)
+      (go
+        (loop [timeout| nil]
+          (let [[value port] (alts! (concat [resize| exit|] (when timeout| [timeout|])))]
+            (condp = port
+
+              resize|
+              (let []
+                #_(println :resize)
+                (recur (timeout 500)))
+
+              timeout|
+              (let []
+                (>! canvas-draw| true)
+                (recur nil))
+
+              exit|
+              (do
+                (swap! exit||A disj exit|)
+                nil))))))
+
+    (let [exit| (chan 1)]
+      (go
+        (loop []
+          (let [[value port] (alts! [canvas-draw| exit|])]
+            (condp = port
+              canvas-draw|
+              (let []
+                #_(println :canvas-draw)
+                (clear-canvas)
+                (draw-line)
+                (draw-word)
+                (recur))
+
+              exit|
+              (do
+                (swap! exit||A disj exit|)
+                nil))))))
+
     (SwingUtilities/invokeLater
      (reify Runnable
        (run [_]
@@ -355,9 +414,11 @@
             (create-jframe)
 
             (.setPreferredSize jframe
-                               (if SystemInfo/isJava_9_orLater
-                                 (Dimension. 830 440)
-                                 (Dimension. 1660 880)))
+                               (let [size (-> (Toolkit/getDefaultToolkit) (.getScreenSize))]
+                                 (Dimension. (UIScale/scale 1024) (UIScale/scale 576)))
+                               #_(if SystemInfo/isJava_9_orLater
+                                   (Dimension. 830 440)
+                                   (Dimension. 1660 880)))
 
             #_(doto jframe
                 (.setDefaultCloseOperation WindowConstants/DISPOSE_ON_CLOSE #_WindowConstants/EXIT_ON_CLOSE)
@@ -371,26 +432,17 @@
               (.setLocationRelativeTo nil)
               (.setVisible true))
 
+
+            (remove-watch stateA :watch-fn)
             (add-watch stateA :watch-fn
                        (fn [ref wathc-key old-state new-state]
 
-                         (when (and canvas
-                                    graphics
-                                    (not= (:component-resized old-state) (:component-resized new-state)))
-                           #_(println :redraw)
-                           (clear-canvas)
-                           (draw-line)
-                           (draw-word))))
+                         (when (not= old-state new-state)
+                           (put! canvas-draw| true))))
 
-            (go
-              (<! (timeout 100))
+            (do
               (eval-form `(print-fns))
-
-              (let [width (.getWidth jframe)
-                    height (.getHeight jframe)]
-                (.setSize jframe (Dimension. (+ 1 width) height))
-                (.setSize jframe (Dimension. width height))
-                (clear-canvas))))))))
+              (force-resize)))))))
 
 (defn reload
   []
