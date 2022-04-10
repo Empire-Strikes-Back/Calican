@@ -11,9 +11,9 @@
    [clojure.repl :as Wichita.repl]
 
    [Calican.seed]
-   [Calican.baked_potatoes]
-   [Calican.groats]
-   [Calican.popcorn]
+   [Calican.microwaved-potatoes]
+   [Calican.kiwis]
+   [Calican.beans]
    [Calican.salt])
   (:import
    (javax.swing JFrame WindowConstants ImageIcon JPanel JScrollPane JTextArea BoxLayout JEditorPane ScrollPaneConstants SwingUtilities JDialog)
