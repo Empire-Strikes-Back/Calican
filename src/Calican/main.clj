@@ -32,7 +32,10 @@
    (org.kordamp.ikonli.swing FontIcon)
    (org.kordamp.ikonli.codicons Codicons)
    (net.miginfocom.swing MigLayout)
-   (net.miginfocom.layout ConstraintParser LC UnitValue))
+   (net.miginfocom.layout ConstraintParser LC UnitValue)
+   (com.jogamp.opengl GL GL2 GLCapabilities GLAutoDrawable GLEventListener GLProfile)
+   (com.jogamp.opengl.awt GLCanvas)
+   (com.jogamp.opengl.glu GLU))
   (:gen-class))
 
 (do (set! *warn-on-reflection* true) (set! *unchecked-math* true))
@@ -89,6 +92,35 @@
   "draw line"
   []
   (.drawLine graphics  (* 0.3 (.getWidth canvas)) (* 0.3 (.getHeight canvas)) (* 0.7 (.getWidth canvas)) (* 0.7 (.getHeight canvas))))
+
+(defn triagle-setup
+  [{:keys [^GL2 gl2
+           ^int width
+           ^int height]
+    :as opts}]
+  (let [_ (.glMatrixMode gl2 GL2/GL_PROJECTION)
+        _ (.glLoadIdentity gl2)
+        glu (GLU.)
+        _ (.gluOrtho2D glu (float 0.0) (float width) (float 0.0) (float height))
+        _ (.glMatrixMode gl2 GL2/GL_MODELVIEW)
+        _ (.glLoadIdentity gl2)
+        _ (.glViewport gl2 (int 0) (int 0) width height)]))
+
+(defn triangle-render
+  [{:keys [^GL2 gl2
+           ^int width
+           ^int height]
+    :as opts}]
+  (.glClear gl2 GL/GL_COLOR_BUFFER_BIT)
+  (.glLoadIdentity gl2)
+  (.glBegin gl2 GL/GL_TRIANGLES)
+  (.glColor3f gl2 1 0 0)
+  (.glVertex2f gl2 0 0)
+  (.glColor3f gl2 0 1 0)
+  (.glVertex2f gl2 width 0)
+  (.glColor3f gl2 0 0 1)
+  (.glVertex2f gl2 (/ width 2) height)
+  (.glEnd gl2))
 
 (defn clear-canvas
   []
@@ -296,8 +328,7 @@
         (alter-var-root #'Calican.main/output (constantly output))
         (alter-var-root #'Calican.main/editor (constantly editor)))
 
-      (let [canvas (Canvas.)
-            canvas-panel (JPanel.)]
+      (let [canvas-panel (JPanel.)]
 
         (doto canvas-panel
           (.setLayout (MigLayout. "insets 0"
@@ -305,27 +336,42 @@
                                   "[grow,shrink,fill]") #_(BoxLayout. canvas-panel BoxLayout/X_AXIS))
           #_(.setBorder (EmptyBorder. #_top 0 #_left 0 #_bottom 50 #_right 50)))
 
-        (doto canvas
-          #_(.setPreferredSize (Dimension. canvas-width canvas-height))
-          (.addMouseListener (reify MouseListener
-                               (mouseClicked
-                                 [_ event]
-                                 (println :coordinate [(.getX ^MouseEvent event) (.getY ^MouseEvent event)]))
-                               (mouseEntered [_ event])
-                               (mouseExited [_ event])
-                               (mousePressed [_ event])
-                               (mouseReleased [_ event]))))
+        #_(let [canvas (Canvas.)]
+            (doto canvas
+              #_(.setPreferredSize (Dimension. canvas-width canvas-height))
+              (.addMouseListener (reify MouseListener
+                                   (mouseClicked
+                                     [_ event]
+                                     (println :coordinate [(.getX ^MouseEvent event) (.getY ^MouseEvent event)]))
+                                   (mouseEntered [_ event])
+                                   (mouseExited [_ event])
+                                   (mousePressed [_ event])
+                                   (mouseReleased [_ event]))))
+            #_(.setRightComponent split-pane canvas)
+            (.add canvas-panel canvas "width 100%!,height 100%!")
+            (go
+              (<! (timeout 50))
+              (alter-var-root #'Calican.main/canvas (constantly canvas))
+              (alter-var-root #'Calican.main/graphics (constantly (.getGraphics canvas)))))
 
-        #_(.setRightComponent split-pane canvas)
+        (let [gl-profile (GLProfile/getDefault)
+              gl-capabilities (GLCapabilities. gl-profile)
+              gl-canvas (GLCanvas. gl-capabilities)]
 
-        (.add canvas-panel canvas "width 100%!,height 100%!")
+          (.addGLEventListener gl-canvas
+                               (reify GLEventListener
+                                 (reshape [_ gl-autodrawable x y width height]
+                                   (triagle-setup (-> ^GLAutoDrawable gl-autodrawable (.getGL) (.getGL2)) width height))
+                                 (init [_ gl-autodrawable])
+                                 (dispose [_ gl-autodrawable])
+                                 (display [_ gl-autodrawable]
+                                   (let [^GLAutoDrawable gl-autodrawable gl-autodrawable]
+                                     (triangle-render (-> gl-autodrawable (.getGL) (.getGL2))
+                                                      (.getSurfaceWidth gl-autodrawable)
+                                                      (.getSurfaceHeight gl-autodrawable))))))
+          (.add canvas-panel gl-canvas "width 100%!,height 100%!"))
 
-        (.add root-panel canvas-panel "dock east,width 50%!, height 1:100%:")
-        (go
-          (<! (timeout 50))
-          (alter-var-root #'Calican.main/canvas (constantly canvas))
-          (alter-var-root #'Calican.main/graphics (constantly (.getGraphics canvas)))))
-
+        (.add root-panel canvas-panel "dock east,width 50%!, height 1:100%:"))
       (.add root-panel content-panel))
 
 
@@ -337,12 +383,6 @@
 
 
     nil))
-
-(defn draw-canvas
-  []
-  
-  
-  )
 
 (defn window
   []
@@ -395,9 +435,9 @@
               canvas-draw|
               (let []
                 #_(println :canvas-draw)
-                (clear-canvas)
-                (draw-line)
-                (draw-word)
+                #_(clear-canvas)
+                #_(draw-line)
+                #_(draw-word)
                 (recur))
 
               exit|
