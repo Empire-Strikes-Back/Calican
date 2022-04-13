@@ -93,35 +93,6 @@
   []
   (.drawLine graphics  (* 0.3 (.getWidth canvas)) (* 0.3 (.getHeight canvas)) (* 0.7 (.getWidth canvas)) (* 0.7 (.getHeight canvas))))
 
-(defn triagle-setup
-  [{:keys [^GL2 gl2
-           ^int width
-           ^int height]
-    :as opts}]
-  (let [_ (.glMatrixMode gl2 GL2/GL_PROJECTION)
-        _ (.glLoadIdentity gl2)
-        glu (GLU.)
-        _ (.gluOrtho2D glu (float 0.0) (float width) (float 0.0) (float height))
-        _ (.glMatrixMode gl2 GL2/GL_MODELVIEW)
-        _ (.glLoadIdentity gl2)
-        _ (.glViewport gl2 (int 0) (int 0) width height)]))
-
-(defn triangle-render
-  [{:keys [^GL2 gl2
-           ^int width
-           ^int height]
-    :as opts}]
-  (.glClear gl2 GL/GL_COLOR_BUFFER_BIT)
-  (.glLoadIdentity gl2)
-  (.glBegin gl2 GL/GL_TRIANGLES)
-  (.glColor3f gl2 1 0 0)
-  (.glVertex2f gl2 0 0)
-  (.glColor3f gl2 0 1 0)
-  (.glVertex2f gl2 width 0)
-  (.glColor3f gl2 0 0 1)
-  (.glVertex2f gl2 (/ width 2) height)
-  (.glEnd gl2))
-
 (defn clear-canvas
   []
   (.clearRect graphics 0 0 (.getWidth canvas)  (.getHeight canvas))
@@ -356,7 +327,34 @@
 
         (let [gl-profile (GLProfile/getDefault)
               gl-capabilities (GLCapabilities. gl-profile)
-              gl-canvas (GLCanvas. gl-capabilities)]
+              gl-canvas (GLCanvas. gl-capabilities)
+
+              triagle-setup (fn
+                              [^GL2 gl2
+                               width
+                               height]
+                              (let [_ (.glMatrixMode gl2 GL2/GL_PROJECTION)
+                                    _ (.glLoadIdentity gl2)
+                                    glu (GLU.)
+                                    _ (.gluOrtho2D glu (float 0.0) (float width) (float 0.0) (float height))
+                                    _ (.glMatrixMode gl2 GL2/GL_MODELVIEW)
+                                    _ (.glLoadIdentity gl2)
+                                    _ (.glViewport gl2 (int 0) (int 0) (int width) (int height))]))
+
+              triangle-render (fn
+                                [^GL2 gl2
+                                 width
+                                 height]
+                                (.glClear gl2 GL/GL_COLOR_BUFFER_BIT)
+                                (.glLoadIdentity gl2)
+                                (.glBegin gl2 GL/GL_TRIANGLES)
+                                (.glColor3f gl2 1 0 0)
+                                (.glVertex2f gl2 0 0)
+                                (.glColor3f gl2 0 1 0)
+                                (.glVertex2f gl2 (int width) 0)
+                                (.glColor3f gl2 0 0 1)
+                                (.glVertex2f gl2 (int (/ width 2)) (int height))
+                                (.glEnd gl2))]
 
           (.addGLEventListener gl-canvas
                                (reify GLEventListener
