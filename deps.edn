@@ -6,11 +6,8 @@
         com.formdev/flatlaf-extras {:mvn/version "2.1"}
         org.kordamp.ikonli/ikonli-swing {:mvn/version "12.3.1"}
         org.kordamp.ikonli/ikonli-codicons-pack {:mvn/version "12.3.1"}
-        com.miglayout/miglayout-swing {:mvn/version "5.3"}
+        com.miglayout/miglayout-swing {:mvn/version "5.3"}}
 
-        org.jogamp.gluegen/gluegen-rt-main {:mvn/version "2.3.2"}
-        org.jogamp.jogl/jogl-all-main {:mvn/version "2.3.2"}}
- 
  :aliases
  {:repl {:extra-deps {Ripley/Ripley {:git/url "https://github.com/Empire-Strikes-Back/Ripley"
                                      :sha "becd2573ab55d42933134d346bc46cdd8fa08c04"}}}
