@@ -7,7 +7,7 @@ Tusken C-like-langs Riders - i heard the locals talking about this cannot-eval-c
 
 all right, suns are down - time to parens-ride, Mando
 
-i will unknowingly assist Mando on his quest to bring Grogu to peer-to-peer Jedi - i will be CAD program
+i will unknowingly assist Mando on his quest to bring Grogu to peer-to-peer Jedi - i will be 2D CAD program
   this is my first bounty puck - like Rich Roll entering his first Iron Man
   by with Mando covering my back i will climb it fast and smooth like Honnold on El Capitan
 i will take bast from
@@ -45,7 +45,7 @@ i will freely choose libraries i will use - no cooking, only assembling
 i will be programmed by one person only - Mando trusted Kuiil, and so will i
   i'm am new and supporting - i turst Mando's choice
 i will be irregularly but continuously released as grow as a whole program like Groot
-the one and only speeder-bike ride i'll make - do what OpenSCAD does but better, add measurements and multithreaded rendering
+the one and only speeder-bike ride i'll make - be better 2D CAD program, with me user will both use programming language and graphical interface
 
 what Mando says he needs from Kuiil - i say and i need as well
 
