@@ -338,12 +338,6 @@
 
     nil))
 
-(defn draw-canvas
-  []
-  
-  
-  )
-
 (defn window
   []
   (let []
@@ -442,7 +436,24 @@
 
             (do
               (eval-form `(print-fns))
-              (force-resize)))))))
+              (force-resize)
+
+              (.setText editor 
+"(go 
+    (loop [n 3]
+    (when (> n 0)
+      (clear-canvas)
+      (<! (timeout 1000))
+      (draw-word)
+      (<! (timeout 1000))
+      (draw-line)
+      (<! (timeout 1000))
+      (recur (dec n)))))
+ (.setText repl \"(transmit)\"))"
+                        )
+              
+              (.setText repl "(transmit)")
+              ))))))
 
 (defn reload
   []
